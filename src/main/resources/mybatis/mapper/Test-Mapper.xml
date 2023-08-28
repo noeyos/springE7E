@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.ddit.spring.mapper.TestMapper">
+    <select id="listTest" resultType="TestVO">
+        SELECT * FROM TEST
+    </select>
+
+    <select id="getTest" parameterType="int" resultType="TestVO">
+        SELECT * FROM TEST WHERE TEST_NUM = #{testNum}
+    </select>
+
+    <insert id="insertTest" parameterType="TestVO">
+        INSERT INTO TEST(TEST_NUM,TEST_NAME,TEST_CONTENT,TEST_FILE)
+        VALUES(seq_test.nextval,#{testName},#{testContent},#{testFile})
+    </insert>
+
+    <update id="updateTest" parameterType="TestVO">
+        UPDATE TEST
+        SET
+            TEST_NAME=#{testName},
+            TEST_CONTENT=#{testContent},
+            TEST_FILE=#{testFile}
+        WHERE
+            TEST_NUM=#{testNum}
+    </update>
+
+    <delete id="deleteTest" parameterType="int">
+        DELETE FROM TEST WHERE TEST_NUM=#{testNum}
+    </delete>
+</mapper>

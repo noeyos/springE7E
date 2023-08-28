@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<div id="list"></div>
+<div id="sajin"></div>
+<form>
+    넘버: <input type="text" name="testNum" value=""><br>
+    이름: <input type="text" name="testName" value=""><br>
+    내용: <textarea name="testContent"></textarea><br>
+    <!--    파일: <input type="file" name="testFile2" value=""><br>-->
+    진짜 파일 : <input type="file" name="testFile2" value=""><br>
+    <button id="create" type="button">생성</button>
+    <button id="search" type="button">조회</button>
+    <button id="update" type="button">수정</button>
+    <button id="delete" type="button">삭제</button>
+    <button id="fileUp" type="button">파일업로드</button>
+    <button id="go" type="button">전송</button>
+</form>
+<script>
+    //DOMContentLoaded Event
+    /*
+    $(function () {
+        getList();
+    });
+     */
+    const $createBtn = $("#create");
+    const $searchBtn = $("#search");
+    const $updateBtn = $("#update");
+    const $deleteBtn = $("#delete");
+    const $fileUp = $("#fileUp");
+    const $go = $("#go");
+    const $sajin = $("#photo");
+
+    const $testNum = $("input[name=testNum]");
+    const $testName = $("input[name=testName]");
+    const $testContent = $("textarea[name=testContent]");
+    const $testFile = $("input[name=testFile]");
+    const $testFile2 = $("input[name=testFile2]");
+
+    // INSERT를 다시
+    $go.on("click", () => {
+        let formData = new FormData(document.forms[0]);
+        // FormData 생성 시 매겨변수로 form 요소(element를 넘겨주면 자동으로 다 넘어감)
+        // 폼 객체를 받으면 자동으로 name, value를 가져가게 됨
+
+        console.log("check", formData);
+
+        let xhr = new XMLHttpRequest();
+        xhr.open("post", "/rest/test", true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState == 4 && xhr.status == 200) {
+                let rslt = xhr.responseText;
+                console.log(rslt);
+                if (rslt == 1) {
+                    Swal.fire('입력 완료');
+                    getList();
+                } else {
+                    Swal.fire('문제가 발생하였습니다');
+                }
+            }
+        }
+        xhr.send(formData);
+    })
+
+    // 파일 업로드
+    $fileUp.on("click", () => {
+        console.log(document.querySelector("input[name=testFile2]"));
+        console.log($testFile2[0]);
+        // 둘이 같음
+
+        console.log(document.querySelector("input[name=testFile2]").files);
+        console.log($testFile2[0].files); //jquery 형식으로 뜸
+
+        // 파일 업로드 하면 생각 나는 거?
+        // ㄴ formData !!!!!!
+        let formData = new FormData();
+        // 전송방식 무조건 multipart/form-data
+
+        formData.append("myFile", $testFile2[0].files[0]);
+        // [0] 쓴 이유는 ... (추후 작성)
+
+
+        $.ajax({
+            type: 'post',
+            url: '/rest/test2',
+            data: formData, //JSON.stringify 하지 않음 !
+            contentType: false, //default 값이 application/x-www-form-urlencoded
+            //jquery 아작쓰는 저 default 값이 가장 많이 사용돼서 기본값으로 먹혀지다 보니
+            //파일 전송할 때는 프로토콜 약속이 무조건 multipart/form-data이기 때문에 필수로 false처리
+            //파일전송할 때 contentType, processData false처리 필수
+            processData: false, //default 값이 application/x-www-form-urlencoded
+            cache: false, // 이거는 선택. 권장!
+            // jquery ajax가 내부적으로 캐시를 하는데 굳이 필요 없으므로 false처리 권장
+            success: function (result) {
+                console.log(result);
+                // document.createElement("img"); == $("<img></img>")
+                $("<img></img>")
+                    .attr("src", result)
+                    .css("width", 200)
+                    .css("height", 200)
+                    .appendTo($sajin);
+
+                // 순수자바스크립트로 썼을 때
+                // let mImg = document.createElement("img");
+                // mImg.src = result;
+                // document.querySelector("#sajin").appendChild(mImg);
+            },
+            error: function (xhr, status, error) {
+                console.log("code: " + xhr.status);
+                console.log("message: " + xhr.responseText);
+                console.log("error: " + xhr.error);
+            }
+
+        });
+    })
+
+    $updateBtn.on("click", () => {
+        let testVO = {
+            testNum: $testNum.val(),
+            testName: $testName.val(),
+            testContent: $testContent.val(),
+            testFile: $testFile.val()
+        }
+        console.log("testVO", testVO);
+
+        $.ajax({
+            type: 'put',
+            url: '/rest/test',
+            data: JSON.stringify(testVO),
+            dataType: 'text',
+            contentType: 'application/json; charset=utf-8',
+            success: function (res) {
+                console.log(res);
+                if (res) {
+                    alert("정상적으로 수정되었습니다.");
+                    getList();
+                } else {
+                    alert("등록에 실패하셨습니다.");
+                }
+            },
+            error: function (xhr) {
+                console.log("CODE: ", xhr.status)
+                console.log("MESSAGE: ", xhr.responseText)
+                console.log("ERROR: ", error);
+            }
+        });
+    });
+
+    $deleteBtn.on("click", () => {
+        $.ajax({
+            type: 'delete',
+            url: `/rest/test/${$testNum.val()}`,
+            dataType: 'text',
+            success: function (res) {
+                console.log(res);
+                if (parseInt(res)) {
+                    $testNum.val(""),
+                        $testName.val(""),
+                        $testContent.val(""),
+                        $testFile.val("")
+                    getList();
+                } else {
+                    alert("삭제하시는 번호가 존재하지 않습니다.");
+                }
+            },
+            error: function (xhr) {
+                console.log("CODE: ", xhr.status)
+                console.log("MESSAGE: ", xhr.responseText)
+                console.log("ERROR: ", error);
+            }
+        });
+    });
+
+    $searchBtn.on("click", () => {
+        $.ajax({
+            type: 'get',
+            url: `/rest/test/${$testNum.val()}`,
+            dataType: 'text',
+            success: function (res) {
+                console.log(res);
+                if (res) {
+                    res = JSON.parse(res);
+                    $testName.val(res.testName);
+                    $testContent.val(res.testContent);
+                    $testFile.val(res.testFile);
+                } else {
+                    alert("조회하시는 번호가 존재하지 않습니다.");
+                }
+
+            },
+            error: function (xhr) {
+                console.log("CODE: ", xhr.status)
+                console.log("MESSAGE: ", xhr.responseText)
+                console.log("ERROR: ", error);
+            }
+        });
+    });
+
+    $createBtn.on("click", () => {
+        let testVO = {
+            testName: $testName.val(),
+            testContent: $testContent.val(),
+            testFile: $testFile.val()
+        }
+        console.log("testVO", testVO);
+
+        $.ajax({
+            type: 'post',
+            url: '/rest/test',
+            data: JSON.stringify(testVO),
+            dataType: 'text',
+            contentType: 'application/json; charset=utf-8',
+            success: function (res) {
+                console.log(res);
+                if (res) {
+                    alert("정상적으로 등록되었습니다.");
+                    getList();
+                } else {
+                    alert("등록에 실패하셨습니다.");
+                }
+            },
+            error: function (xhr) {
+                console.log("CODE: ", xhr.status)
+                console.log("MESSAGE: ", xhr.responseText)
+                console.log("ERROR: ", error);
+            }
+        });
+    });
+
+
+    function getList() {
+        $.ajax({
+            type: 'get',
+            url: '/rest/test',
+            //data: '', //list 불러옴. 보내는 데이터 생략
+            dataType: 'json',
+            //contentType: '',
+            //async: '',
+            success: function (res) {
+                //정렬을 클라이언트 사이드에서 하면 성능이나 서버부하를 줄이는 측면에서 유리함!
+                res.sort((a, b) => { //a와 b는 row
+                    return a.testNum - b.testNum;
+                });
+                let code = `<table border="1">`;
+                code += `<tr><td>넘버</td><td>이름</td><td>내용</td><td>파일</td><td>다운로드</td></tr>`;
+
+                for (let i = 0; i < res.length; i++) {
+                    code += `<tr>
+                            <td>${res[i].testNum}</td>
+                            <td>${res[i].testName}</td>
+                            <td>${res[i].testContent}</td>`
+                    // a 태그 속성에 download 있는데 거기에 'test.jpg' 이런식으로 속석값 넣어주면
+                    // 해당 이미지가 test.jpg 이름으로 저장됨
+                    code += `<td><a href='${res[i].testFile}'>보기</a></td>
+                            <td><button onclick=fDownload('${res[i].testFile}')>다운로드</button></td>
+                            </tr>`;
+                }
+
+                code += `</table>`;
+
+                let table = document.querySelector("#list")
+                table.innerHTML = code;
+            },
+            error: function (xhr) {
+                console.log("CODE: ", xhr.status)
+                console.log("MESSAGE: ", xhr.responseText)
+                console.log("ERROR: ", error);
+            }
+        })
+    }
+
+    // 파일 다운로드!
+    function fDownload(urlPath) {
+        let startIndex = urlPath.lastIndexOf("/") + 1;
+        let originalName = urlPath.substring(startIndex);
+
+        let aTag = document.createElement("a"); // a 태그 생성
+        aTag.href = urlPath;
+        aTag.download = originalName; // 클릭시 다운로드가 되도록 download 속성 추가
+
+        aTag.click(); // 강제 클릭 발생시킴
+    }
+
+    //페이지 시작하자마자 리스트
+    getList();
+</script>
+</body>
+</html>
