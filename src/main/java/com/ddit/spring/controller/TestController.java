@@ -2,13 +2,12 @@ package com.ddit.spring.controller;
 
 import com.ddit.spring.service.TestService;
 import com.ddit.spring.vo.TestVO;
+import com.ddit.spring.vo.MyTestVO;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.io.ResolverUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.annotation.MultipartConfig;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -81,6 +80,19 @@ public class TestController {
         String webURL = "/kmerong/" + myFile.getOriginalFilename();
 
         return webURL;
+    }
+
+//    @RequestPart를 써야하는 경우가 잘 생기지는 않음
+//    JSON문자열이 일부 자바객체로 변환이 불완전하게 될 때 사용
+    @PostMapping("/rest/myTest")
+    public String testtest(@RequestPart("test") MyTestVO test,
+                           @RequestPart("testFile") MultipartFile mFile) {
+        // 파일이 포함된 거엔 @RequestBody를 사용할 수 없음
+        // 파일을 받아야 할 때만 @RequestPart로 나눠서 받음
+        // 받아서 합쳐줌
+        log.debug("check : {}", test);
+        log.debug("file : {}", mFile);
+        return "테스트";
     }
 
 }

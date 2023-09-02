@@ -21,6 +21,7 @@
     <button id="delete" type="button">삭제</button>
     <button id="fileUp" type="button">파일업로드</button>
     <button id="go" type="button">전송</button>
+    <button id="part" type="button">아주가끔</button>
 </form>
 <script>
     //DOMContentLoaded Event
@@ -36,12 +37,45 @@
     const $fileUp = $("#fileUp");
     const $go = $("#go");
     const $sajin = $("#photo");
+    const $part = $("#part");
 
     const $testNum = $("input[name=testNum]");
     const $testName = $("input[name=testName]");
     const $testContent = $("textarea[name=testContent]");
     const $testFile = $("input[name=testFile]");
     const $testFile2 = $("input[name=testFile2]");
+
+    $part.on("click", function() {
+        // 복잡한 VO와 File을 함께 보낼 때는
+        // File과 VO를 분리해서 받는 방법을 가끔 사용함
+        // 왜? VO문자열이 자바객체로 변경이 일부 안 되는 경우(DEPTH가 깊음)
+        // 가 있음!, 앞으론 더 잘 될 거임~
+        let formData = new FormData();
+
+        // 퍼일 넣기
+        formData.append("testFile", $testFile2[0].files[0]);
+
+        let test = {
+            name : "햄스터",
+            age : 8,
+            friends : ["갱얼지", "망곰", "푸바오"]
+        }
+
+        // 복잡한 JSON 객체를 문자열화해서 BLOB로 담아서 보냄
+        // BACKEND에서 @RequestPart("test")로 받아 버리자
+        formData.append("test",new Blob([JSON.stringify(test)],{type:"application/json;charset=utf-8"}));
+
+
+        let xhr = new XMLHttpRequest();
+        xhr.open("post", "/rest/myTest", true);
+        xhr.onreadystatechange = function () {
+            if(xhr.readyState == 4 && xhr.status == 200) {
+                console.log(xhr.responseText);
+
+            }
+        }
+        xhr.send(formData);
+    })
 
     // INSERT를 다시
     $go.on("click", () => {
